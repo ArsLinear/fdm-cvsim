@@ -2,10 +2,11 @@
 authors = ["Arlyn <109974543+ArsLinear@users.noreply.github.com>"]
 channels = ["conda-forge"]
 name = "fdm-cvsim"
-platforms = ["win-64"]
+platforms = ["win-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
 
 [dependencies]
 python = ">=3.14.7,<3.15"
+numpy = ">=2.5.3,<3"
