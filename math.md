@@ -12,11 +12,11 @@ j=nk_0F
 
 \left[
 
-c_\text{ox}^\text{s}\exp\left(-\frac{\alpha nF}{RT}\right)(E-E^{0'})
+c_\text{ox}^\text{s}\exp\left(-\frac{\alpha nF}{RT}(E-E^{0'})\right)
 
 -
 
-c_\text{red}^\text{s}\exp\left(\frac{(1-\alpha) nF}{RT}\right)(E-E^{0'})
+c_\text{red}^\text{s}\exp\left(\frac{(1-\alpha) nF}{RT}(E-E^{0'})\right)
 
 \right]
 $$
@@ -60,7 +60,7 @@ D_\text{ox}&0 \\
 =
 \begin{pmatrix}
 \exp[\left(-\frac{\alpha nF}{RT}\right)(E-E^{0'})] \\
-\exp[\left(\frac{(1-\alpha) nF}{RT}\right)(E-E^{0'})]
+-\exp[\left(\frac{(1-\alpha) nF}{RT}\right)(E-E^{0'})]
 \end{pmatrix}
 
 \\\\
@@ -78,7 +78,7 @@ $$
 
 \begin{aligned}
 
--\mathbf{D}\pdv{\mathbf{c}}{x}
+\mathbf{D}\pdv{\mathbf{c}}{x}
 &=k_0\mathbf{s}\mathbf{A}^{\mathsf T}\mathbf{c},
 && x=0 \\[6pt]
 
@@ -155,12 +155,12 @@ $$
 
 上述计算方法是针对无源项、无流项的Fick扩散过程。如果界面有浓度流（比如说我们的法拉第过程），该如何使用FDM求解呢？在这个过程中，电极表面$x=0$处有：
 $$
--\mathbf{D}\pdv{\mathbf{c}}{x}
+\mathbf{D}\pdv{\mathbf{c}}{x}
 =k_0\mathbf{s}\mathbf{A}^{\mathsf T}\mathbf{c}
 $$
 对空间离散可以得到：
 $$
--\mathbf{D}\frac{\mathbf{c}_{1}^{j+1}-\mathbf{c}_{-1}^{j+1}}{2\Delta x}
+\mathbf{D}\frac{\mathbf{c}_{1}^{j+1}-\mathbf{c}_{-1}^{j+1}}{2\Delta x}
 =k_0\mathbf{s}\mathbf{A}_{j+1}^{\mathsf T}\mathbf{c}_{0}^{j+1}
 $$
 在电极界面上的Fick扩散定律，有
