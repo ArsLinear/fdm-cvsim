@@ -57,6 +57,7 @@ def cv_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, 
         big_matrix[i, i+1] = -coefficient
 
     big_matrix[num-1, num-1] = np.eye(2)
+    big_matrix[0, 1] = -2 * coefficient
 
     for t in range(len(waveform)):
 
@@ -65,15 +66,12 @@ def cv_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, 
         flux = 2 * k0 * dt / dx * np.outer([1.0, -1.0], butler_volmer)
 
         big_matrix[0, 0] = np.eye(2) + 2 * coefficient + flux
-        big_matrix[0, 1] = -2 * coefficient
 
         matrix_2d = big_matrix.transpose(0, 2, 1, 3).reshape(2 * num, 2 * num)
         concentration[num-1] = [c_ox, c_red]
         concentration = spsolve(csr_matrix(matrix_2d), concentration.reshape(-1)).reshape(num, 2)
 
         concentration_surface = concentration[0, :]
-        butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP)),
-                            - np.exp((1 - alpha) * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP))])
         current[t] = n * F_CONST * k0 * (butler_volmer @ concentration_surface)
 
     end = time.perf_counter()
