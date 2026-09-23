@@ -26,7 +26,7 @@ $$
 
 表面物种浓度受到两个因素的影响：
 
-1. 电极反应的消耗或生成。这一部分仅发生在电极表面，可以通过法拉第定律来描述，即：
+1. 电极反应的消耗或生成。法拉第过程生成或消耗的浓度流等于界面浓度流。这一部分仅发生在电极表面，可以通过法拉第定律来描述，即：
    $$
    \pdv{c^\text{s}}{t}=-\frac{j}{nF}
    $$
@@ -169,16 +169,16 @@ $$
 $$
 联立(16)(17)得：
 $$
-\mathbf{c}_{0}^{j+1}-\mathbf{c}_{0}^{j}=2\mathbf{R}(\mathbf{c}_{1}^{j+1}-2\mathbf{c}_{0}^{j+1})+\frac{2k_0\Delta t}{\Delta x} \mathbf{s}\mathbf{A}_{j+1}^{\mathrm{T}}\mathbf{c}_{-1}^{j+1}
+\mathbf{c}_{0}^{j+1}-\mathbf{c}_{0}^{j}=2\mathbf{R}(\mathbf{c}_{1}^{j+1}-2\mathbf{c}_{0}^{j+1})-\frac{2k_0\Delta t}{\Delta x} \mathbf{s}\mathbf{A}_{j+1}^{\mathrm{T}}\mathbf{c}_{0}^{j+1}
 $$
 令$\mathbf{Q}_{j+1} = \frac{2k_0\Delta t}{\Delta x} \mathbf{s}\mathbf{A}_{j+1}^{\mathrm{T}}$则：
 $$
-(\mathbf{I} + 2\mathbf{R} - \mathbf{Q}_{j+1})\mathbf{c}_0^{j+1} - 2\mathbf{R}\mathbf{c}_1^{j+1} = \mathbf{c}_0^j
+(\mathbf{I} + 2\mathbf{R} + \mathbf{Q}_{j+1})\mathbf{c}_0^{j+1} - 2\mathbf{R}\mathbf{c}_1^{j+1} = \mathbf{c}_0^j
 $$
 所以我们需要求解的方程组变成了：
 $$
 \begin{pmatrix}
-\mathbf{I} + 2\mathbf{R} - \mathbf{Q} & -2\mathbf{R} & 0 & \cdots \\
+\mathbf{I} + 2\mathbf{R} + \mathbf{Q} & -2\mathbf{R} & 0 & \cdots \\
 -\mathbf{R} & \mathbf{I} + 2\mathbf{R} & -\mathbf{R} & \cdots \\
 0 & -\mathbf{R} & \mathbf{I} + 2\mathbf{R} & \ddots \\
 \vdots & \vdots & \ddots & \ddots
@@ -197,3 +197,29 @@ $$
 \vdots
 \end{pmatrix}
 $$
+将$x=L$的边界条件带入得到：
+$$
+\begin{pmatrix}
+\mathbf{I} + 2\mathbf{R} + \mathbf{Q} & -2\mathbf{R} & 0 & \cdots & 0 \\
+-\mathbf{R} & \mathbf{I} + 2\mathbf{R} & -\mathbf{R} & \cdots & 0 \\
+0 & -\mathbf{R} & \mathbf{I} + 2\mathbf{R} & \ddots & \vdots \\
+\vdots & \vdots & \ddots & \ddots & -\mathbf{R} \\
+0 & 0 & \cdots & 0 & \mathbf{I}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{c}_0^{j+1} \\
+\mathbf{c}_1^{j+1} \\
+\mathbf{c}_2^{j+1} \\
+\vdots \\
+\mathbf{c}_N^{j+1}
+\end{pmatrix}
+=
+\begin{pmatrix}
+\mathbf{c}_0^j \\
+\mathbf{c}_1^j \\
+\mathbf{c}_2^j \\
+\vdots \\
+\mathbf{c}_{\text{bulk}}^j
+\end{pmatrix}
+$$
+解这个稀疏矩阵方程即可。
