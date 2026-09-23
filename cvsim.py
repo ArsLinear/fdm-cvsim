@@ -17,7 +17,7 @@ def cv_waveform_generator(initial, switch, scan_rate):
     t_1 = np.arange(0, (switch - initial) / scan_rate, dt)
     t_2 = np.arange((switch - initial) / scan_rate, 2 * (switch - initial) / scan_rate, dt)
 
-    time = t_1 + t_2
+    time = 2 * (switch - initial) / scan_rate
 
     waveform_1 = initial + scan_rate * t_1
     waveform_2 = switch - scan_rate * (t_2 - (switch - initial) / scan_rate)
@@ -62,17 +62,42 @@ def cv_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, 
 
     waveform, time = cv_waveform_generator(initial, switch, scan_rate)
 
-    length_diff = 6 * np.sqrt(np.max(D_ox, D_red) * time)
+    length_diff = 6 * np.sqrt(max(D_ox, D_red) * time)
 
     space_num = int(np.ceil(length_diff / SAMPLE_SPACE))
 
     current = np.zeros(len(waveform))
     concentration = np.tile([c_ox, c_red], (space_num + 1, 1))
 
+    dt = SAMPLE_TIME
+    dx = SAMPLE_SPACE
+    num = space_num + 1
+
     for t in range(len(waveform)):
-        concentration = _fdm_sim(
-            waveform[t], k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, concentration
-        )
+
+        diffusivity = np.array([[D_ox, 0.0], [0.0, D_red]])
+        coefficient = diffusivity * dt / dx ** 2
+
+        butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform - E0) / (R_CONST * TEMP)),
+                                - np.exp((1 - alpha) * n * F_CONST * (waveform - E0) / (R_CONST * TEMP))])
+        flux = 2 * k0 * dt / dx * np.outer([1.0, -1.0], butler_volmer)
+
+        big_matrix = np.zeros((num, num, 2, 2))
+
+        big_matrix[0, 0] = np.eye(2) + 2 * coefficient + flux
+        big_matrix[0, 1] = -2 * coefficient
+
+        for i in range(1, num - 1):
+            big_matrix[i, i-1] = -coefficient
+            big_matrix[i, i] = np.eye(2) + 2 * coefficient
+            big_matrix[i, i+1] = -coefficient
+
+        big_matrix[num-1, num-1] = np.eye(2)
+
+        big_matrix = big_matrix.transpose(0, 2, 1, 3).reshape(2 * num, 2 * num)
+        concentration[num-1] = [c_ox, c_red]
+        concentration = np.linalg.solve(big_matrix, concentration.reshape(-1)).reshape(num, 2)
+
         concentration_surface = concentration[0, :]
         butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform - E0) / (R_CONST * TEMP)),
                             - np.exp((1 - alpha) * n * F_CONST * (waveform - E0) / (R_CONST * TEMP))])
