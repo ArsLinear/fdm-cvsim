@@ -69,7 +69,7 @@ def cv_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, 
         concentration_surface = concentration[0, :]
         butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP)),
                             - np.exp((1 - alpha) * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP))])
-        current[t] = n * F_CONST * k0 * (butler_volmer[:, t] @ concentration_surface)
+        current[t] = n * F_CONST * k0 * (butler_volmer @ concentration_surface)
 
     return [waveform, current]
 
