@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import waveform as wf
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 
@@ -14,21 +15,22 @@ F_CONST = 96485  # C/mol
 TEMP = 293.15  # K，20 °C
 
 
-def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
+def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
 
     start = time.perf_counter()
 
-    waveform, time_tot = cv_waveform_generator(initial, switch, scan_rate)
+    dt = SAMPLE_TIME
+    dx = SAMPLE_SPACE
+    num = space_num + 1
+
+    time_array = np.arange(len(waveform)) * dt
+    time_tot = time_array[-1]
 
     length_diff = 6 * np.sqrt(max(D_ox, D_red) * time_tot)
     space_num = int(np.ceil(length_diff / SAMPLE_SPACE))
 
     current = np.zeros(len(waveform))
     concentration = np.tile([c_ox, c_red], (space_num + 1, 1))
-
-    dt = SAMPLE_TIME
-    dx = SAMPLE_SPACE
-    num = space_num + 1
 
     diffusivity = np.array([[D_ox, 0.0], [0.0, D_red]])
     coefficient = diffusivity * dt / dx ** 2
@@ -76,9 +78,11 @@ def non_faraday_sim(waveform, C_dl):
 # 时间步、扩散区域长度和网格数是数值设置，不是实验测量值。
 
 waveform, current_faraday = faraday_sim(
-    initial=0.067,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
-    switch=-0.333,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
-    scan_rate=-0.05,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
+    waveform=wf.cv_waveform_generator(
+        initial=0.067,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
+        switch=-0.333,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
+        scan_rate=-0.05,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
+        ),
     k0=0.02,            # cm/s
     alpha=0.5,          # 对称电荷转移的近似
     E0=-0.133,          # V vs Ag/AgCl (3 M KCl)
