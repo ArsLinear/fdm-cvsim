@@ -13,22 +13,6 @@ R_CONST = 8.314  # J/(mol*K)
 F_CONST = 96485  # C/mol
 TEMP = 293.15  # K，20 °C
 
-def cv_waveform_generator(initial, switch, scan_rate):
-
-    dt = SAMPLE_TIME
-
-    t_1 = np.arange(0, (switch - initial) / scan_rate, dt)
-    t_2 = np.arange((switch - initial) / scan_rate, 2 * (switch - initial) / scan_rate, dt)
-
-    time_tot = np.abs(2 * (switch - initial) / scan_rate)
-
-    waveform_1 = initial + scan_rate * t_1
-    waveform_2 = switch - scan_rate * (t_2 - (switch - initial) / scan_rate)
-
-    waveform = np.concatenate([waveform_1, waveform_2])
-
-    return waveform, time_tot
-
 
 def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
 
