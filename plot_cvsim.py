@@ -1,5 +1,3 @@
-"""Run cvsim.py's example simulation and plot the cyclic voltammogram."""
-
 import matplotlib.pyplot as plt
 
 import cvsim

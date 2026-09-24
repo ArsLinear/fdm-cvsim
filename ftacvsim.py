@@ -13,7 +13,8 @@ R_CONST = 8.314  # J/(mol*K)
 F_CONST = 96485  # C/mol
 TEMP = 293.15  # K，20 °C
 
-def cv_waveform_generator(initial, switch, scan_rate):
+
+def ftacv_waveform_generator(initial, switch, scan_rate, amplitude, frequency):
 
     dt = SAMPLE_TIME
 
@@ -22,19 +23,20 @@ def cv_waveform_generator(initial, switch, scan_rate):
 
     time_tot = np.abs(2 * (switch - initial) / scan_rate)
 
-    waveform_1 = initial + scan_rate * t_1
-    waveform_2 = switch - scan_rate * (t_2 - (switch - initial) / scan_rate)
+    time_array = np.concatenate([t_1, t_2])
+
+    waveform_1 = initial + scan_rate * t_1 + amplitude * np.sin(2 * np.pi * frequency * t_1)
+    waveform_2 = switch - scan_rate * (t_2 - (switch - initial) / scan_rate) + amplitude * np.sin(2 * np.pi * frequency * t_2)
 
     waveform = np.concatenate([waveform_1, waveform_2])
 
-    return waveform, time_tot
+    return waveform, time_tot, time_array
 
-
-def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
+def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, amplitude, frequency):
 
     start = time.perf_counter()
 
-    waveform, time_tot = cv_waveform_generator(initial, switch, scan_rate)
+    waveform, time_tot, time_array = ftacv_waveform_generator(initial, switch, scan_rate, amplitude, frequency)
 
     length_diff = 6 * np.sqrt(max(D_ox, D_red) * time_tot)
     space_num = int(np.ceil(length_diff / SAMPLE_SPACE))
@@ -77,8 +79,7 @@ def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_
     end = time.perf_counter()
     print(f"Simulation time: {end - start:.2f} s")
 
-    return [waveform, current]
-
+    return [waveform, time_array, current]
 
 def non_faraday_sim(waveform, C_dl):
     current = C_dl * np.gradient(waveform, SAMPLE_TIME)
@@ -91,7 +92,7 @@ def non_faraday_sim(waveform, C_dl):
 # 单位：长度 cm，时间 s，浓度 mol/cm^3，电位 V，输出电流密度 A/cm^2。
 # 时间步、扩散区域长度和网格数是数值设置，不是实验测量值。
 
-waveform, current_faraday = faraday_sim(
+waveform, time_array, current_faraday = faraday_sim(
     initial=0.067,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
     switch=-0.333,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
     scan_rate=-0.05,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
@@ -102,9 +103,11 @@ waveform, current_faraday = faraday_sim(
     c_red=0.0,
     D_ox=5.3e-6,        # cm^2/s，Ru(NH3)6^3+
     D_red=7.3e-6,       # cm^2/s，Ru(NH3)6^2+
-    n=1
+    n=1,
+    amplitude=0.1,      # V
+    frequency=9.0       # Hz
 )
 
-current_non_faraday = non_faraday_sim(waveform, C_dl=1e-4)  # F/cm^2，双电层电容
+current_non_faraday = non_faraday_sim(waveform, C_dl=5e-5)  # F/cm^2，双电层电容
 
 current = current_faraday + current_non_faraday
