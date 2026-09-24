@@ -71,7 +71,7 @@ def faraday_sim(initial, switch, scan_rate, k0, alpha, E0, c_ox, c_red, D_ox, D_
         concentration = spsolve(csr_matrix(matrix_2d), concentration.reshape(-1)).reshape(num, 2)
 
         concentration_surface = concentration[0, :]
-        current[t] = n * F_CONST * k0 * (butler_volmer @ concentration_surface)
+        current[t] = -n * F_CONST * k0 * (butler_volmer @ concentration_surface)
 
     end = time.perf_counter()
     print(f"Simulation time: {end - start:.2f} s")
