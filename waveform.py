@@ -1,10 +1,6 @@
 import numpy as np
 
-SAMPLE_TIME = 0.005  # s；0.5 V/s 时每步扫描 2.5 mV
-
-def cv_waveform_generator(initial, switch, scan_rate):
-
-    dt = SAMPLE_TIME
+def cv_waveform_generator(initial, switch, scan_rate, dt):
 
     t_1 = np.arange(0, (switch - initial) / scan_rate, dt)
     t_2 = np.arange((switch - initial) / scan_rate, 2 * (switch - initial) / scan_rate, dt)
@@ -16,9 +12,7 @@ def cv_waveform_generator(initial, switch, scan_rate):
 
     return waveform
 
-def ftacv_waveform_generator(initial, switch, scan_rate, amplitude, frequency):
-
-    dt = SAMPLE_TIME
+def ftacv_waveform_generator(initial, switch, scan_rate, amplitude, frequency, dt):
 
     t_1 = np.arange(0, (switch - initial) / scan_rate, dt)
     t_2 = np.arange((switch - initial) / scan_rate, 2 * (switch - initial) / scan_rate, dt)

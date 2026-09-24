@@ -1,21 +1,14 @@
-import numpy as np
-import waveform as wf
 import time
+import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
-
-SAMPLE_TIME = 0.005  # s；0.5 V/s 时每步扫描 2.5 mV
-
-SPACE = 0.02  # cm，数值模拟的扩散区域长度
-SPACE_NUM = 80
-SAMPLE_SPACE = SPACE / SPACE_NUM
 
 R_CONST = 8.314  # J/(mol*K)
 F_CONST = 96485  # C/mol
 TEMP = 293.15  # K，20 °C
 
 
-def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
+def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt):
 
     start = time.perf_counter()
 
@@ -23,14 +16,11 @@ def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
     time_tot = time_array[-1]
 
     length_diff = 6 * np.sqrt(max(D_ox, D_red) * time_tot)
-    space_num = int(np.ceil(length_diff / SAMPLE_SPACE))
+    space_num = int(np.ceil(length_diff / dx))
+    num = space_num + 1
 
     current = np.zeros(len(waveform))
     concentration = np.tile([c_ox, c_red], (space_num + 1, 1))
-
-    dt = SAMPLE_TIME
-    dx = SAMPLE_SPACE
-    num = space_num + 1
 
     diffusivity = np.array([[D_ox, 0.0], [0.0, D_red]])
     coefficient = diffusivity * dt / dx ** 2
@@ -45,7 +35,7 @@ def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
     big_matrix[num-1, num-1] = np.eye(2)
     big_matrix[0, 1] = -2 * coefficient
 
-    for t in range(len(waveform)):
+    for t in range(1, len(waveform)):
 
         butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP)),
                             - np.exp((1 - alpha) * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP))])
@@ -65,6 +55,6 @@ def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n):
 
     return [waveform, time_array, current]
 
-def non_faraday_sim(waveform, C_dl):
-    current = C_dl * np.gradient(waveform, SAMPLE_TIME)
+def non_faraday_sim(waveform, C_dl, dt):
+    current = C_dl * np.gradient(waveform, dt)
     return current
