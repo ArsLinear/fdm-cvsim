@@ -1,9 +1,5 @@
-import numpy as np
 import waveform as wf
 import simulator as sim
-import time
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import spsolve
 
 SAMPLE_TIME = 0.005  # s；0.5 V/s 时每步扫描 2.5 mV
 
@@ -22,15 +18,17 @@ TEMP = 293.15  # K，20 °C
 # 单位：长度 cm，时间 s，浓度 mol/cm^3，电位 V，输出电流密度 A/cm^2。
 # 时间步、扩散区域长度和网格数是数值设置，不是实验测量值。
 
-time_array, current_faraday = sim.faraday_sim(
-    waveform=wf.ftacv_waveform_generator(
+waveform_array = wf.ftacv_waveform_generator(
         initial=0.067,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
         switch=-0.333,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
         scan_rate=-0.05,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
         amplitude=0.1,       # V；小幅度正弦波
         frequency=9.0,        # Hz；正弦波频率
         dt=SAMPLE_TIME
-        ),
+    )
+
+time_array, current_faraday = sim.faraday_sim(
+    waveform=waveform_array,
     k0=0.02,            # cm/s
     alpha=0.5,          # 对称电荷转移的近似
     E0=-0.133,          # V vs Ag/AgCl (3 M KCl)
@@ -44,14 +42,7 @@ time_array, current_faraday = sim.faraday_sim(
 )
 
 current_non_faraday = sim.non_faraday_sim(
-    waveform=wf.ftacv_waveform_generator(
-        initial=0.067,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
-        switch=-0.333,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
-        scan_rate=-0.05,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
-        amplitude=0.1,       # V；小幅度正弦波
-        frequency=9.0,        # Hz；正弦波频率
-        dt=SAMPLE_TIME
-        ), 
+    waveform=waveform_array,
     C_dl=1e-4,
     dt=SAMPLE_TIME
     )  # F/cm^2，双电层电容
