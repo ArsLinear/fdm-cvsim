@@ -53,7 +53,7 @@ def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt):
     end = time.perf_counter()
     print(f"Simulation time: {end - start:.2f} s")
 
-    return [waveform, time_array, current]
+    return [time_array, current]
 
 def non_faraday_sim(waveform, C_dl, dt):
     current = C_dl * np.gradient(waveform, dt)

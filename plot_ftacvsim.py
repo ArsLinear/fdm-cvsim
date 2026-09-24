@@ -1,13 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 import ftacvsim
 
 
 def main():
-    # ftacvsim runs its example simulation on import and exposes the total
-    # current density as `current`.
-    time = np.arange(len(ftacvsim.current)) * ftacvsim.SAMPLE_TIME
+    # ftacvsim exposes the time array returned by the simulator.
+    time = ftacvsim.time_array
     current_density = ftacvsim.current
 
     fig, ax = plt.subplots()
