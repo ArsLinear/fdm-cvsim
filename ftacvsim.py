@@ -22,7 +22,7 @@ waveform_array = wf.ftacv_waveform_generator(
         initial=0.1,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
         switch=-0.6,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
         scan_rate=-0.05215,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
-        amplitude=0.18,       # V；小幅度正弦波
+        amplitude=0.08,       # V；小幅度正弦波
         frequency=9.54,        # Hz；正弦波频率
         dt=1/SAMPLE_RATE
     )
