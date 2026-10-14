@@ -2,7 +2,7 @@ import numpy as np
 
 R_CONST = 8.314  # J/(mol*K)
 F_CONST = 96485  # C/mol
-TEMP = 293.15  # K，20 °C
+TEMP = 298.15  # K，25 °C
 
 class OuterSphere:
     def __init__(self, waveform, k0, alpha, E0, n, D_ox, D_red, c_ox, c_red, dx, dt):

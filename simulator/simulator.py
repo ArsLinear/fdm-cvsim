@@ -1,5 +1,5 @@
 import numpy as np
-from .edl import edl_current
+from .model.edl import edl_current
 from .solver import solver
 
 def faraday_sim(model):
