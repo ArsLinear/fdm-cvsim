@@ -1,52 +1,49 @@
 import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import spsolve
 
 R_CONST = 8.314  # J/(mol*K)
 F_CONST = 96485  # C/mol
 TEMP = 293.15  # K，20 °C
 
+class OuterSphere:
+    def __init__(self, waveform, k0, alpha, E0, n, D_ox, D_red, c_ox, c_red, dx, dt):
+        self.waveform = waveform
+        self.k0 = k0
+        self.alpha = alpha
+        self.E0 = E0
+        self.n = n
+        self.D_ox = D_ox
+        self.D_red = D_red
+        self.c_ox = c_ox
+        self.c_red = c_red
+        self.dx = dx
+        self.dt = dt
 
-def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt):
+    def boundary_matrix(self, t):
+        butler_volmer = np.array([np.exp(-self.alpha * self.n * F_CONST * (self.waveform[t] - self.E0) / (R_CONST * TEMP)),
+                        - np.exp((1 - self.alpha) * self.n * F_CONST * (self.waveform[t] - self.E0) / (R_CONST * TEMP))])
+        flux = 2 * self.k0 * self.dt / self.dx * np.outer([1.0, -1.0], butler_volmer)
+        return flux
 
-    time_array = np.arange(len(waveform)) * dt
-    time_tot = time_array[-1]
+    def concentration_matrix(self):
+        time_array = np.arange(len(self.waveform)) * self.dt
+        time_tot = time_array[-1]
 
-    length_diff = 6 * np.sqrt(max(D_ox, D_red) * time_tot)
-    space_num = int(np.ceil(length_diff / dx))
-    num = space_num + 1
+        length_diff = 6 * np.sqrt(max(self.D_ox, self.D_red) * time_tot)
+        space_num = int(np.ceil(length_diff / self.dx))
+        num = space_num + 1
 
-    current = np.zeros(len(waveform))
-    concentration = np.tile([c_ox, c_red], (space_num + 1, 1))
+        concentration = np.tile([self.c_ox, self.c_red], (space_num + 1, 1))
 
-    diffusivity = np.array([[D_ox, 0.0], [0.0, D_red]])
-    coefficient = diffusivity * dt / dx ** 2
+        return concentration
 
-    big_matrix = np.zeros((num, num, 2, 2))
+    def coefficient_matrix(self):
+        return np.array([[self.D_ox, 0.0], [0.0, self.D_red]]) * self.dt / self.dx ** 2
 
-    for i in range(1, num - 1):
-        big_matrix[i, i-1] = -coefficient
-        big_matrix[i, i] = np.eye(2) + 2 * coefficient
-        big_matrix[i, i+1] = -coefficient
-
-    big_matrix[num-1, num-1] = np.eye(2)
-    big_matrix[0, 1] = -2 * coefficient
-
-    for t in range(1, len(waveform)):
-
-        butler_volmer = np.array([np.exp(-alpha * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP)),
-                            - np.exp((1 - alpha) * n * F_CONST * (waveform[t] - E0) / (R_CONST * TEMP))])
-        flux = 2 * k0 * dt / dx * np.outer([1.0, -1.0], butler_volmer)
-
-        big_matrix[0, 0] = np.eye(2) + 2 * coefficient + flux
-
-        matrix_2d = big_matrix.transpose(0, 2, 1, 3).reshape(2 * num, 2 * num)
-        concentration[num-1] = [c_ox, c_red]
-        concentration = spsolve(csr_matrix(matrix_2d), concentration.reshape(-1)).reshape(num, 2)
-
-        concentration_surface = concentration[0, :]
-        current[t] = -n * F_CONST * k0 * (butler_volmer @ concentration_surface)
-
-    return [time_array, current]
-
+    def butler_volmer(self, t, concentration_surface):
+        potential = self.waveform[t]
+        bv_matrix = np.array([
+            np.exp(-self.alpha * self.n * F_CONST * (potential - self.E0) / (R_CONST * TEMP)),
+            -np.exp((1 - self.alpha) * self.n * F_CONST * (potential - self.E0) / (R_CONST * TEMP)),
+        ])
+        return -self.n * F_CONST * self.k0 * (bv_matrix @ concentration_surface)
 
