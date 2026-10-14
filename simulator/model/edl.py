@@ -1,5 +1,5 @@
 import numpy as np
 
-def edl_current(waveform, C_dl, dt):
-    current = C_dl * np.gradient(waveform, dt)
+def edl_current(model):
+    current = model.C_dl * np.gradient(model.waveform, model.dt)
     return current

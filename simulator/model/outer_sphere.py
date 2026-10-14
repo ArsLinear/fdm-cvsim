@@ -5,7 +5,7 @@ F_CONST = 96485  # C/mol
 TEMP = 298.15  # K，25 °C
 
 class OuterSphere:
-    def __init__(self, waveform, k0, alpha, E0, n, D_ox, D_red, c_ox, c_red, dx, dt):
+    def __init__(self, waveform, k0, alpha, E0, n, D_ox, D_red, c_ox, c_red, C_dl, dx, dt):
         self.waveform = waveform
         self.k0 = k0
         self.alpha = alpha
@@ -15,6 +15,7 @@ class OuterSphere:
         self.D_red = D_red
         self.c_ox = c_ox
         self.c_red = c_red
+        self.C_dl = C_dl
         self.dx = dx
         self.dt = dt
 
