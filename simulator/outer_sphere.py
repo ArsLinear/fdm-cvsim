@@ -1,4 +1,3 @@
-import time
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
@@ -9,8 +8,6 @@ TEMP = 293.15  # K，20 °C
 
 
 def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt):
-
-    start = time.perf_counter()
 
     time_array = np.arange(len(waveform)) * dt
     time_tot = time_array[-1]
@@ -50,21 +47,6 @@ def faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt):
         concentration_surface = concentration[0, :]
         current[t] = -n * F_CONST * k0 * (butler_volmer @ concentration_surface)
 
-    end = time.perf_counter()
-    print(f"Simulation time: {end - start:.2f} s")
-
     return [time_array, current]
 
-def non_faraday_sim(waveform, C_dl, dt):
-    current = C_dl * np.gradient(waveform, dt)
-    return current
 
-def current_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, C_dl, dx, dt):
-    
-    time_array, faraday_current = faraday_sim(waveform, k0, alpha, E0, c_ox, c_red, D_ox, D_red, n, dx, dt)
-    
-    non_faraday_current = non_faraday_sim(waveform, C_dl, dt)
-    
-    total_current = faraday_current + non_faraday_current
-    
-    return time_array, total_current

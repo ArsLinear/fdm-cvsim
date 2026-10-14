@@ -1,5 +1,5 @@
 import waveform as wf
-import simulator as sim
+import simulator.simulator as sim
 
 SAMPLE_RATE = 200  # s；0.5 V/s 时每步扫描 2.5 mV
 
