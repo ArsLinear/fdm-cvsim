@@ -1,8 +1,6 @@
 import time
-import waveform as wf
+import numpy as np
 import simulator as sim
-
-SAMPLE_RATE = 200  # s；0.5 V/s 时每步扫描 2.5 mV
 
 SPACE = 0.02  # cm，数值模拟的扩散区域长度
 SPACE_NUM = 80
@@ -17,25 +15,23 @@ SAMPLE_SPACE = SPACE / SPACE_NUM
 
 start_time = time.perf_counter()
 
-waveform_array = wf.ftacv_waveform_generator(
-        initial=0.1,       # V vs Ag/AgCl；从 E0 + 0.2 V 开始
-        switch=-0.6,      # V vs Ag/AgCl；在 E0 - 0.2 V 反向
-        scan_rate=-0.05215,     # V/s；文献测试的扫描速率范围包含 0.5 V/s
-        amplitude=0.08,       # V；小幅度正弦波
-        frequency=9.54,        # Hz；正弦波频率
-        dt=1/SAMPLE_RATE
-    )
+experimental_data = np.loadtxt(
+    r"C:\Users\bkzeng\Code\ftacv-params\data\K3FeCN6_100mVs_a.csv",
+    delimiter=",", skiprows=4, usecols=(0, 1),
+)
+SAMPLE_RATE = 1 / np.mean(np.diff(experimental_data[:, 0]))
+waveform_array = experimental_data[:, 1]
 
 model = sim.OuterSphere(
     waveform=waveform_array,
-    k0=0.02,            # cm/s
-    alpha=0.5,          # 对称电荷转移的近似
-    E0=-0.133,          # V vs Ag/AgCl (3 M KCl)
-    c_ox=2e-7,          # 1 mM Ru(NH3)6^3+ = 1e-6 mol/cm^3
+    k0=0.0126434249,        # cm/s；100 mV/s_a MCMC
+    alpha=0.487558372,
+    E0=0.303279851,         # V
+    c_ox=1.21e-6,            # mol/cm^3
     c_red=0.0,
-    D_ox=5.3e-6,        # cm^2/s，Ru(NH3)6^3+
-    D_red=7.3e-6,       # cm^2/s，Ru(NH3)6^2+
-    C_dl=1e-5,
+    D_ox=7.74e-6,            # cm^2/s
+    D_red=6.61e-6,           # cm^2/s
+    C_dl=4.11089089e-05,     # F/cm^2
     n=1,
     dx=SAMPLE_SPACE,
     dt=1/SAMPLE_RATE

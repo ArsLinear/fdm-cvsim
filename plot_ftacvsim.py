@@ -11,7 +11,7 @@ def main():
     time = ftacvsim.time_array
     current_density = ftacvsim.current
 
-    output_path = Path(__file__).with_name("ftacvsim.csv")
+    output_path = Path(__file__).with_name("ftacvsim_100mVs_a_mcmc.csv")
     with output_path.open("w", newline="", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow([
