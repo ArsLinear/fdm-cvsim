@@ -17,10 +17,10 @@ start_time = time.perf_counter()
 
 experimental_data = np.loadtxt(
     r"C:\Users\bkzeng\Code\ftacv-params\data\K3FeCN6_100mVs_a.csv",
-    delimiter=",", skiprows=4, usecols=(0, 1),
+    delimiter=",", skiprows=4, usecols=(0, 1, 2),
 )
 SAMPLE_RATE = 1 / np.mean(np.diff(experimental_data[:, 0]))
-waveform_array = experimental_data[:, 1]
+waveform_array = experimental_data[:, 1] - experimental_data[:, 2] * 11.54  # iR 校正，R = 11.54 Ω
 
 model = sim.OuterSphere(
     waveform=waveform_array,
