@@ -17,7 +17,7 @@ def faraday_sim(model, grid, dt):
     init_boundary = np.array([model.c_ox, model.c_red])
     coefficient, surface_coefficient = coefficient_matrix(model.diffusion_matrix(), grid, dt)
 
-    concentration = np.tile(init_boundary, (len(grid), 1))
+    concentration = concentration_matrix(init_boundary, grid)
 
     big_matrix = big_matrix_init(coefficient, surface_coefficient)
     big_matrix = big_matrix_refresh(
@@ -46,10 +46,10 @@ def faraday_sim(model, grid, dt):
 
     return time_array, faraday_current
 
-def edl_sim(model):
-    return edl_current(model)
+def edl_sim(model, dt):
+    return edl_current(model, dt)
 
-def current_sim(model):
-    time_array, faraday_current = faraday_sim(model)
-    edl_current = edl_sim(model)
+def current_sim(model, grid, dt):
+    time_array, faraday_current = faraday_sim(model, grid, dt)
+    edl_current = edl_sim(model, dt)
     return time_array, faraday_current + edl_current

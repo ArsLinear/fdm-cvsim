@@ -1,11 +1,7 @@
 import time
 import numpy as np
 import simulator as sim
-
-SPACE = 0.02  # cm，数值模拟的扩散区域长度
-SPACE_NUM = 80
-SAMPLE_SPACE = SPACE / SPACE_NUM
-
+from simulator.mesh import uniform_grid, exponential_grid
 
 start_time = time.perf_counter()
 
@@ -27,13 +23,18 @@ model = sim.OuterSphere(
     D_red=6.61e-6,           # cm^2/s
     C_dl=4.1108204049071266e-05,     # F/cm^2
     n=1,
-    dx=SAMPLE_SPACE,
-    dt=1/SAMPLE_RATE
 )
 
-time_array, current_faraday = sim.faraday_sim(model)
+length = 6 * np.sqrt(max(model.D_ox, model.D_red) * (len(waveform_array) - 1) * 1/SAMPLE_RATE)  # cm，扩散层长度，6倍扩散长度
 
-current_non_faraday = sim.edl_sim(model)
+time_array, current_faraday = sim.faraday_sim(
+    model, 
+    exponential_grid(length, 1e-5, ratio=1.01), 
+    # uniform_grid(length, 1e-5),
+    1/SAMPLE_RATE
+)
+
+current_non_faraday = sim.edl_sim(model, 1/SAMPLE_RATE)
 
 current = current_faraday + current_non_faraday
 
