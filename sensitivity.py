@@ -26,6 +26,8 @@ DX0_CANDIDATES = [
     1e-6,
 ]
 
+PARAM_TOL = 5e-3
+
 def grid(dx0):
     grid = exponential_grid(LENGTH, dx0, ratio=RATIO)
     grid = grid[grid < LENGTH]
@@ -63,8 +65,6 @@ def estimate_parameter_shift(dx0, reference_current, jacobian):
     current = sim_current(dx0, base.model)
     delta_z, *_ = np.linalg.lstsq(jacobian, -(current - reference_current), rcond=None,)
     return delta_z
-
-PARAM_TOL = 5e-3
 
 for dx0 in DX0_CANDIDATES:
     delta_z = estimate_parameter_shift(dx0, reference_current, jacobian)
