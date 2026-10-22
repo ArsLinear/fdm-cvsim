@@ -2,39 +2,29 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from .model.outer_sphere import R_CONST, F_CONST, TEMP
 
-def boundary_matrix(model, t):
-    butler_volmer = np.array([np.exp(-model.alpha * model.n * F_CONST * (model.waveform[t] - model.E0) / (R_CONST * TEMP)),
-                    - np.exp((1 - model.alpha) * model.n * F_CONST * (model.waveform[t] - model.E0) / (R_CONST * TEMP))])
-    flux = 2 * model.k0 * model.dt / model.dx * np.outer([1.0, -1.0], butler_volmer)
-    return flux
+def boundary_matrix(interfacial_reaction_rate_coefficient_matrix, dx0, dt):
+    return 2 * dt / dx0 * interfacial_reaction_rate_coefficient_matrix
 
-def concentration_matrix(model):
-    time_array = np.arange(len(model.waveform)) * model.dt
-    time_tot = time_array[-1]
+def concentration_matrix(initial_concentration, grid):
+    return np.tile(initial_concentration, (len(grid), 1))
 
-    length_diff = 6 * np.sqrt(max(model.D_ox, model.D_red) * time_tot)
-    space_num = int(np.ceil(length_diff / model.dx))
-    num = space_num + 1
+def coefficient_matrix(diffusion_matrix, grid, dt):
+    num_inner = len(grid) - 2
+    coefficient_matrix = np.zeros((2, num_inner, 2, 2)) #left: j=0, right: j=1
 
-    concentration = np.tile([model.c_ox, model.c_red], (space_num + 1, 1))
+    spacing = np.diff(grid)
 
-    return concentration
+    for i in range(1, len(grid) - 1):
+        for j in range(2):
+            coefficient_matrix[j, i - 1] = (2 * diffusion_matrix * dt / (spacing[i - (1 - j)] * (spacing[i - 1] + spacing[i])))
 
-def coefficient_matrix(model):
-    return np.array([[model.D_ox, 0.0], [0.0, model.D_red]]) * model.dt / model.dx ** 2
+    surface_coefficient_matrix = diffusion_matrix * dt / spacing[0] ** 2
 
-def butler_volmer(model, t, concentration_surface):
-    potential = model.waveform[t]
-    bv_matrix = np.array([
-        np.exp(-model.alpha * model.n * F_CONST * (potential - model.E0) / (R_CONST * TEMP)),
-        -np.exp((1 - model.alpha) * model.n * F_CONST * (potential - model.E0) / (R_CONST * TEMP)),
-    ])
-    return -model.n * F_CONST * model.k0 * (bv_matrix @ concentration_surface)
+    return coefficient_matrix, surface_coefficient_matrix
 
 
-
-def big_matrix_init(coefficient, concentration):
-    num = concentration.shape[0]
+def big_matrix_init(coefficient, surface_coefficient):
+    num = coefficient.shape[1] + 2
 
     big_matrix = lil_matrix((2 * num, 2 * num))
     
@@ -42,13 +32,13 @@ def big_matrix_init(coefficient, concentration):
         start = 2 * i
         rows = slice(start, start + 2)
 
-        big_matrix[rows, start-2:start] = -coefficient
-        big_matrix[rows, start:start+2] = np.eye(2) + 2*coefficient
-        big_matrix[rows, start+2:start+4] = -coefficient
+        big_matrix[rows, start-2:start] = -coefficient[0, i - 1]
+        big_matrix[rows, start:start+2] = np.eye(2) + coefficient[0, i - 1] + coefficient[1, i - 1]
+        big_matrix[rows, start+2:start+4] = -coefficient[1, i - 1]
 
-    big_matrix[0:2, 0:2] = np.eye(2) + 2 * coefficient
+    big_matrix[0:2, 0:2] = np.eye(2) + 2 * surface_coefficient
 
-    big_matrix[0:2, 2:4] = -2 * coefficient
+    big_matrix[0:2, 2:4] = -2 * surface_coefficient
 
     start = 2 * (num - 1)
     big_matrix[start:start + 2, start:start + 2] = np.eye(2)

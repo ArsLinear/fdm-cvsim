@@ -21,8 +21,11 @@ class OuterSphere:
     def diffusion_matrix(self):
         return np.array([[self.D_ox, 0.0], [0.0, self.D_red]])
 
-    def interfacial_reaction_rate_coefficient_matrix(self, t, concentration_surface):
-        potential = self.waveform[t]
+    def interfacial_reaction_rate_coefficient_matrix(self, potential):
         bv_matrix = np.array([np.exp(-self.alpha * self.n * F_CONST * (potential - self.E0) / (R_CONST * TEMP)), 
                               -np.exp((1 - self.alpha) * self.n * F_CONST * (potential - self.E0) / (R_CONST * TEMP)),])
-        return -self.n * F_CONST * self.k0 * (bv_matrix @ concentration_surface)
+        return self.k0 * np.outer([1.0, -1.0], bv_matrix)
+
+    def butler_volmer(self, potential, concentration_surface):
+        reaction_flux = self.interfacial_reaction_rate_coefficient_matrix(potential) @ concentration_surface
+        return -self.n * F_CONST * reaction_flux[0]

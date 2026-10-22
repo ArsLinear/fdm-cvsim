@@ -1,32 +1,48 @@
 import numpy as np
 from .model.edl import edl_current
 from .solver import solver
-from .assembly import big_matrix_init, big_matrix_refresh, rhs_assemble
+from .assembly import (
+    concentration_matrix,
+    coefficient_matrix,
+    boundary_matrix,
+    big_matrix_init,
+    big_matrix_refresh,
+    rhs_assemble,
+)
 
-def faraday_sim(model):
-    time_array = np.arange(len(model.waveform)) * model.dt
+def faraday_sim(model, grid, dt):
+    time_array = np.arange(len(model.waveform)) * dt
     faraday_current = np.zeros(len(model.waveform))
+    
+    init_boundary = np.array([model.c_ox, model.c_red])
+    coefficient, surface_coefficient = coefficient_matrix(model.diffusion_matrix(), grid, dt)
 
-    concentration = model.concentration_matrix()
-    coefficient = model.coefficient_matrix()
-    far_boundary = np.array([model.c_ox, model.c_red])
+    concentration = np.tile(init_boundary, (len(grid), 1))
 
-    num = concentration.shape[0]
-
-    big_matrix = big_matrix_init(coefficient, concentration)
+    big_matrix = big_matrix_init(coefficient, surface_coefficient)
     big_matrix = big_matrix_refresh(
-        big_matrix, coefficient, model.boundary_matrix(0)
+        big_matrix, 
+        surface_coefficient, 
+        boundary_matrix(
+            model.interfacial_reaction_rate_coefficient_matrix(model.waveform[0]), 
+            grid[1]-grid[0], 
+            dt
+        )
     )
     big_matrix = big_matrix.tocsc()
 
     for t in range(1, len(model.waveform)):
-        flux = model.boundary_matrix(t)
-        big_matrix = big_matrix_refresh(big_matrix, coefficient, flux)
-        rhs = rhs_assemble(concentration, far_boundary)
+        flux = boundary_matrix(
+            model.interfacial_reaction_rate_coefficient_matrix(model.waveform[t]), 
+            grid[1]-grid[0], 
+            dt
+        )
+        big_matrix = big_matrix_refresh(big_matrix, surface_coefficient, flux)
+        rhs = rhs_assemble(concentration, init_boundary)
         
         solution = solver(big_matrix, rhs)
-        concentration = solution.reshape(num, 2)
-        faraday_current[t] = model.butler_volmer(t, concentration[0, :])
+        concentration = solution.reshape(len(grid), 2)
+        faraday_current[t] = model.butler_volmer(model.waveform[t], concentration[0, :])
 
     return time_array, faraday_current
 
