@@ -29,7 +29,6 @@ def faraday_sim(model, grid, dt):
             dt
         )
     )
-    big_matrix = big_matrix.tocsc()
 
     for t in range(1, len(model.waveform)):
         flux = boundary_matrix(

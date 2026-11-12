@@ -22,32 +22,32 @@ def coefficient_matrix(diffusion_matrix, grid, dt):
 
     return coefficient_matrix, surface_coefficient_matrix
 
-
 def big_matrix_init(coefficient, surface_coefficient):
     num = coefficient.shape[1] + 2
 
-    big_matrix = lil_matrix((2 * num, 2 * num))
+    big_matrix = np.zeros((5, 2 * num))
     
     for i in range(1, num - 1):
         start = 2 * i
         rows = slice(start, start + 2)
 
-        big_matrix[rows, start-2:start] = -coefficient[0, i - 1]
-        big_matrix[rows, start:start+2] = np.eye(2) + coefficient[0, i - 1] + coefficient[1, i - 1]
-        big_matrix[rows, start+2:start+4] = -coefficient[1, i - 1]
+        big_matrix[4, start-2:start] = -coefficient[0, i - 1].diagonal()
+        big_matrix[2, rows] = (np.eye(2) + coefficient[0, i - 1] + coefficient[1, i - 1]).diagonal()
+        big_matrix[0, start+2:start+4] = -coefficient[1, i - 1].diagonal()
 
-    big_matrix[0:2, 0:2] = np.eye(2) + 2 * surface_coefficient
-
-    big_matrix[0:2, 2:4] = -2 * surface_coefficient
+    big_matrix[2, 0:2] = (np.eye(2) + 2 * surface_coefficient).diagonal()
+    big_matrix[0, 2:4] = (-2 * surface_coefficient).diagonal()
 
     start = 2 * (num - 1)
-    big_matrix[start:start + 2, start:start + 2] = np.eye(2)
+    big_matrix[2, start:start + 2] = 1.0
     
     return big_matrix
 
 
 def big_matrix_refresh(big_matrix, coefficient, flux):
-    big_matrix[0:2, 0:2] = np.eye(2) + 2*coefficient + flux
+    big_matrix[2, 0:2] = (np.eye(2) + 2 * coefficient + flux).diagonal()
+    big_matrix[1, 1] = flux[0, 1]
+    big_matrix[3, 0] = flux[1, 0]
     return big_matrix
 
 def rhs_assemble(concentration, far_boundary):
